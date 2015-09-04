@@ -9,6 +9,10 @@ set(INCLUDE_DIR include)
 set(DEPENDENCIES_DIR dependencies)
 set(SOURCE_DIR src)
 
+# TOOD configure for release
+message(STATUS "Building with TANGRAM_DEBUG flags on")
+add_definitions(-DTANGRAM_DEBUG)
+
 add_subdirectory("${DEPENDENCIES_DIR}")
 
 file(GLOB_RECURSE FOUND_HEADERS "${SOURCE_DIR}/*.h")
