@@ -85,7 +85,7 @@ void Tile::build(StyleContext& _ctx, const Scene& _scene, const TileData& _data,
         style->onEndBuildTile(*this);
     }
 
-    for (auto& geometry : m_geometry) {
+    for (auto& geometry : m_geometry.map) {
         geometry.second->compileVertexBuffer();
     }
 }
@@ -100,7 +100,7 @@ void Tile::update(float _dt, const View& _view) {
 }
 
 void Tile::reset() {
-    for (auto& entry : m_geometry) {
+    for (auto& entry : m_geometry.map) {
         if (!entry.second) { continue; }
         auto labelMesh = dynamic_cast<LabelMesh*>(entry.second.get());
         if (!labelMesh) { continue; }
@@ -133,7 +133,7 @@ std::unique_ptr<VboMesh>& Tile::getMesh(const Style& _style) {
 
 size_t Tile::getMemoryUsage() const {
     if (m_memoryUsage == 0) {
-        for (auto& entry : m_geometry) {
+        for (auto& entry : m_geometry.map) {
             if (entry.second) {
                 m_memoryUsage += entry.second->bufferSize();
             }

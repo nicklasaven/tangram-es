@@ -2,6 +2,8 @@
 
 #include "gl.h"
 
+#include "util/types.h"
+
 #include <vector>
 #include <unordered_map>
 #include <memory>
@@ -39,7 +41,8 @@ public:
 
 private:
 
-    static std::unordered_map<GLint, GLuint> s_enabledAttribs; // Map from attrib locations to bound shader program
+    //static std::unordered_map<GLint, GLuint> s_enabledAttribs; // Map from attrib locations to bound shader program
+    static fastmap<GLint, GLuint> s_enabledAttribs; // Map from attrib locations to bound shader program
 
     std::vector<VertexAttrib> m_attribs;
     GLint m_stride;

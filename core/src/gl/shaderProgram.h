@@ -4,6 +4,7 @@
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
+#include "util/types.h"
 
 #include <string>
 #include <vector>
@@ -115,8 +116,10 @@ private:
     GLuint m_glProgram;
     GLuint m_glFragmentShader;
     GLuint m_glVertexShader;
-    std::unordered_map<std::string, ShaderLocation> m_attribMap;
-    std::unordered_map<std::string, ShaderLocation> m_uniformMap;
+
+    fastmap<std::string, ShaderLocation> m_attribMap;
+    fastmap<std::string, ShaderLocation> m_uniformMap;
+
     std::string m_fragmentShaderSource;
     std::string m_vertexShaderSource;
 

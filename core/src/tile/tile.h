@@ -3,6 +3,7 @@
 #include "glm/mat4x4.hpp"
 #include "glm/vec2.hpp"
 #include "tileID.h"
+#include "util/types.h"
 
 #include <map>
 #include <memory>
@@ -176,7 +177,8 @@ private:
     // Distances from the global origin are too large to represent precisely in 32-bit floats, so we only apply the
     // relative translation from the view origin to the model origin immediately before drawing the tile.
 
-    std::unordered_map<std::string, std::unique_ptr<VboMesh>> m_geometry; // Map of <Style>s and their associated <VboMesh>es
+    //std::unordered_map<std::string, std::unique_ptr<VboMesh>> m_geometry; // Map of <Style>s and their associated <VboMesh>es
+    fastmap<std::string, std::unique_ptr<VboMesh>> m_geometry; // Map of <Style>s and their associated <VboMesh>es
 
     mutable size_t m_memoryUsage = 0;
 };
