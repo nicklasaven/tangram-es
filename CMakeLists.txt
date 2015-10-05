@@ -70,3 +70,7 @@ include(${CMAKE_TARGET_FILE})
 build()
 
 link_libraries()
+
+if(PLATFORM_TARGET STREQUAL "linux")
+  add_subdirectory(scenecompiler)
+endif()
