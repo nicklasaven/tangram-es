@@ -76,7 +76,7 @@ public:
 
     void addDataSource(std::shared_ptr<DataSource> dataSource);
 
-    const auto getTileSets() { return m_tileSets; }
+    const auto& getTileSets() { return m_tileSets; }
 
     std::shared_ptr<ClientGeoJsonSource> getClientSourceById(int32_t _id);
 
