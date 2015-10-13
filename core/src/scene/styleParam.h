@@ -130,6 +130,8 @@ struct StyleParam {
     static bool isWidth(StyleParamKey _key);
 
     static StyleParamKey getKey(const std::string& _key);
+    static std::string getKeyName(StyleParamKey _key);
+
 };
 
 }
