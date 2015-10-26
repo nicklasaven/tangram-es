@@ -89,11 +89,54 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
     uint32_t strokeWidth = _params.strokeWidth / _params.blurSpread * 255. * .25;
     uint32_t stroke = (_params.strokeColor & 0x00ffffff) + (strokeWidth << 24);
 
-    for (auto& q : quads) {
+    struct WordBreak {
+        int start;
+        int end;
+    };
+
+    std::vector<WordBreak> breaks;
+    for (int i = 0, quad = 0; i < _params.text.size(); ++i) {
+        if (std::isspace(_params.text[i])) {
+            int lookAHead = i;
+            while (lookAHead++ < _params.text.size() && !std::isspace(_params.text[lookAHead])) {}
+            breaks.push_back({int(quad + breaks.size() + 1), lookAHead});
+        } else {
+            quad++;
+        }
+    }
+
+    for (const auto& q : quads) {
         x0 = std::min(x0, std::min(q.x0, q.x1));
         x1 = std::max(x1, std::max(q.x0, q.x1));
         y0 = std::min(y0, std::min(q.y0, q.y1));
         y1 = std::max(y1, std::max(q.y0, q.y1));
+    }
+
+    glm::vec2 size((x1 - x0), (y1 - y0));
+
+    float yOffset = 0;
+    float xOffset = 0;
+
+    float yPadding = size.y * 0.5f;
+
+    int lastBreak = 0;
+    for (int i = 0; i < quads.size(); ++i) {
+        auto& q = quads[i];
+
+        for (auto& b : breaks) {
+            if (i == b.start && b.end - lastBreak > 15) {
+                auto& previousQuad = quads[i - 1];
+                float spaceLength = q.x0 - previousQuad.x1;
+                yOffset += yPadding;
+                xOffset = -q.x0 - quads[0].x0 * 0.5f + spaceLength + xOffset;
+                lastBreak = b.start;
+            }
+        }
+
+        q.x0 += xOffset;
+        q.x1 += xOffset;
+        q.y0 += yOffset;
+        q.y1 += yOffset;
 
         vertices.push_back({{q.x0, q.y0}, {q.s0, q.t0}, _params.fill, stroke});
         vertices.push_back({{q.x0, q.y1}, {q.s0, q.t1}, _params.fill, stroke});
@@ -102,8 +145,6 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
     }
 
     _fontContext.unlock();
-
-    glm::vec2 size((x1 - x0), (y1 - y0));
 
     m_labels.emplace_back(new TextLabel(_transform, _type, size, *this,
                                         { vertexOffset, numVertices }, _params.labelOptions));
