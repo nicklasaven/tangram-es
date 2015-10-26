@@ -114,10 +114,12 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
 
     glm::vec2 size((x1 - x0), (y1 - y0));
 
+    const auto& metrics = _fontContext.getMetrics();
+
     float yOffset = 0;
     float xOffset = 0;
 
-    float yPadding = size.y * 0.5f;
+    float yPadding = metrics.lineHeight;
 
     int lastBreak = 0;
     for (int i = 0; i < quads.size(); ++i) {

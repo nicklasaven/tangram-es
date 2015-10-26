@@ -69,22 +69,29 @@ FontID FontContext::addFont(const std::string& _family, const std::string& _weig
             !(data = bytesFromFile(bundledFontPath.c_str(), PathType::internal, &dataSize))) {
             const std::string sysFontPath = systemFontPath(_family, _weight, _style);
             if ( !(data = bytesFromFile(sysFontPath.c_str(), PathType::absolute, &dataSize)) ) {
-                
+
                 LOGE("Could not load font file %s", fontKey.c_str());
                 m_fonts.emplace(std::move(fontKey), INVALID_FONT);
                 goto fallback;
             }
         }
     }
+
+
     font = fonsAddFont(m_fsContext, fontKey.c_str(), data, dataSize);
+    fonsSetFont(m_fsContext, font);
+
+    FontMetrics metrics;
+    fonsVertMetrics(m_fsContext, &metrics.ascender, &metrics.descender, &metrics.lineHeight);
+    m_fontMetrics[font] = metrics;
+
+    m_fonts.emplace(std::move(fontKey), font);
 
     if (font == FONS_INVALID) {
         LOGE("Could not load font %s", fontKey.c_str());
         m_fonts.emplace(std::move(fontKey), INVALID_FONT);
         goto fallback;
     }
-
-    m_fonts.emplace(std::move(fontKey), font);
 
     return font;
 
@@ -95,12 +102,27 @@ fallback:
     return INVALID_FONT;
 }
 
+bool FontContext::getMetrics(FontID _fontID, FontContext::FontMetrics& _metrics) {
+    auto metrics = m_fontMetrics.find(_fontID);
+
+    if (metrics != m_fontMetrics.end()) {
+        _metrics = metrics->second;
+        return true;
+    }
+
+    return false;
+}
+
 void FontContext::setFont(const std::string& _key, int size) {
     FontID id = getFontID(_key);
 
     if (id >= 0) {
         fonsSetSize(m_fsContext, size);
         fonsSetFont(m_fsContext, id);
+
+        if (!getMetrics(id, m_currentFontMetrics)) {
+            LOGW("Can't load font metrics for font %s", _key.c_str());
+        }
     } else {
         LOGW("Could not find font %s", _key.c_str());
     }
@@ -131,6 +153,10 @@ std::vector<FONSquad>& FontContext::rasterize(const std::string& _text, FontID _
 
     fonsSetSize(m_fsContext, _fontSize);
     fonsSetFont(m_fsContext, _fontID);
+
+    if (!getMetrics(_fontID, m_currentFontMetrics)) {
+        LOGW("Can't load font metrics for font id %d", _fontID);
+    }
 
     if (_sdf > 0){
         fonsSetBlur(m_fsContext, _sdf);

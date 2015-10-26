@@ -18,6 +18,11 @@ class FontContext {
 
 public:
 
+    struct FontMetrics {
+        float ascender;
+        float descender;
+        float lineHeight;
+    };
 
     ~FontContext();
     FontContext();
@@ -48,8 +53,12 @@ public:
      */
     std::vector<FONSquad>& rasterize(const std::string& _text, FontID _fontID, float _fontSize, float _sdf);
 
+    /* Returns the metrics of the currently used font */
+    const FontMetrics& getMetrics() const { return m_currentFontMetrics; }
 
 private:
+    bool getMetrics(FontID _id, FontContext::FontMetrics& _metrics);
+
     static void renderUpdate(void* _userPtr, int* _rect, const unsigned char* _data);
     static int renderCreate(void* _userPtr, int _width, int _height);
     static void pushQuad(void* _userPtr, const FONSquad* _quad);
@@ -60,9 +69,12 @@ private:
     void initFontContext(int _atlasSize);
 
     std::map<std::string, int> m_fonts;
+    std::map<int, FontMetrics> m_fontMetrics;
     std::unique_ptr<Texture> m_atlas;
     std::mutex m_contextMutex;
     std::mutex m_atlasMutex;
+
+    FontMetrics m_currentFontMetrics;
 
     FONScontext* m_fsContext;
     std::vector<FONSquad> m_quadBuffer;
