@@ -15,6 +15,22 @@ TextBuffer::TextBuffer(std::shared_ptr<VertexLayout> _vertexLayout)
 TextBuffer::~TextBuffer() {
 }
 
+std::vector<TextBuffer::WordBreak> TextBuffer::findWordBreaks(const std::string& _text) {
+    std::vector<WordBreak> breaks;
+
+    for (int i = 0, quad = 0; i < _text.size(); ++i) {
+        if (std::isspace(_text[i])) {
+            int lookAHead = i;
+            while (lookAHead++ < _text.size() && !std::isspace(_text[lookAHead])) {}
+            breaks.push_back({int(quad + breaks.size() + 1), lookAHead});
+        } else {
+            quad++;
+        }
+    }
+
+    return breaks;
+}
+
 bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform _transform,
                           Label::Type _type, FontContext& _fontContext) {
 
@@ -22,6 +38,11 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
         return false;
     }
 
+    if (!_fontContext.lock()) {
+        return false;
+    }
+
+    /// Apply text transforms
     const std::string* renderText;
     std::string text;
 
@@ -60,11 +81,7 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
         renderText = &text;
     }
 
-    if (!_fontContext.lock()) {
-        return false;
-    }
-
-    // rasterize glyphs
+    /// Rasterize the glyphs
     std::vector<FONSquad>& quads = _fontContext.rasterize(*renderText, _params.fontId,
                                                           _params.fontSize,
                                                           _params.blurSpread);
@@ -79,9 +96,6 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
     int vertexOffset = vertices.size();
     int numVertices = numGlyphs * 4;
 
-    float inf = std::numeric_limits<float>::infinity();
-    float x0 = inf, x1 = -inf, y0 = inf, y1 = -inf;
-
     // Stroke width is normalized by the distance of the SDF spread, then scaled
     // to a char, then packed into the "alpha" channel of stroke. The .25 scaling
     // probably has to do with how the SDF is generated, but honestly I'm not sure
@@ -89,49 +103,32 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
     uint32_t strokeWidth = _params.strokeWidth / _params.blurSpread * 255. * .25;
     uint32_t stroke = (_params.strokeColor & 0x00ffffff) + (strokeWidth << 24);
 
-    struct WordBreak {
-        int start;
-        int end;
-    };
-
-    std::vector<WordBreak> breaks;
-    for (int i = 0, quad = 0; i < _params.text.size(); ++i) {
-        if (std::isspace(_params.text[i])) {
-            int lookAHead = i;
-            while (lookAHead++ < _params.text.size() && !std::isspace(_params.text[lookAHead])) {}
-            breaks.push_back({int(quad + breaks.size() + 1), lookAHead});
-        } else {
-            quad++;
-        }
-    }
-
-    for (const auto& q : quads) {
-        x0 = std::min(x0, std::min(q.x0, q.x1));
-        x1 = std::max(x1, std::max(q.x0, q.x1));
-        y0 = std::min(y0, std::min(q.y0, q.y1));
-        y1 = std::max(y1, std::max(q.y0, q.y1));
-    }
-
-    glm::vec2 size((x1 - x0), (y1 - y0));
-
+    auto breaks = findWordBreaks(_params.text);
     const auto& metrics = _fontContext.getMetrics();
 
-    float yOffset = 0;
-    float xOffset = 0;
-
+    float yOffset = 0.f, xOffset = 0.f;
     float yPadding = metrics.lineHeight;
+    glm::vec2 bbox;
 
-    int lastBreak = 0;
+    int nLine = 1, lastBreak = 0;
+
+    /// Generate the quads
     for (int i = 0; i < quads.size(); ++i) {
         auto& q = quads[i];
 
-        for (auto& b : breaks) {
-            if (i == b.start && b.end - lastBreak > 15) {
-                auto& previousQuad = quads[i - 1];
-                float spaceLength = q.x0 - previousQuad.x1;
-                yOffset += yPadding;
-                xOffset = -q.x0 - quads[0].x0 * 0.5f + spaceLength + xOffset;
-                lastBreak = b.start;
+        // Apply word wrapping based on the word breaks
+        if (i > 1) {
+            for (auto& b : breaks) {
+                if (i == b.start && b.end - lastBreak > 15) {
+                    auto& previousQuad = quads[i - 1];
+                    float spaceLength = q.x0 - previousQuad.x1;
+
+                    yOffset += yPadding;
+                    xOffset -= q.x0 + quads[0].x0 * 0.5f - spaceLength;
+
+                    lastBreak = b.start;
+                    nLine++;
+                }
             }
         }
 
@@ -144,11 +141,17 @@ bool TextBuffer::addLabel(const TextStyle::Parameters& _params, Label::Transform
         vertices.push_back({{q.x0, q.y1}, {q.s0, q.t1}, _params.fill, stroke});
         vertices.push_back({{q.x1, q.y0}, {q.s1, q.t0}, _params.fill, stroke});
         vertices.push_back({{q.x1, q.y1}, {q.s1, q.t1}, _params.fill, stroke});
+
+        // Adjust the bounding box on x
+        bbox.x = std::max(bbox.x, q.x1);
     }
+
+    // Adjust the bounding box on y
+    bbox.y = metrics.lineHeight * nLine;
 
     _fontContext.unlock();
 
-    m_labels.emplace_back(new TextLabel(_transform, _type, size, *this,
+    m_labels.emplace_back(new TextLabel(_transform, _type, bbox, *this,
                                         { vertexOffset, numVertices }, _params.labelOptions));
 
     // TODO: change this in TypeMesh::adVertices()

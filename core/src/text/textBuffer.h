@@ -31,6 +31,12 @@ public:
 
 private:
 
+    struct WordBreak {
+        int start;
+        int end;
+    };
+
+    std::vector<WordBreak> findWordBreaks(const std::string& _text);
 
     bool m_dirtyTransform;
 };
