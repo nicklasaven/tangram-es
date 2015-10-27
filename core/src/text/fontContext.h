@@ -54,10 +54,9 @@ public:
     std::vector<FONSquad>& rasterize(const std::string& _text, FontID _fontID, float _fontSize, float _sdf);
 
     /* Returns the metrics of the currently used font */
-    const FontMetrics& getMetrics() const { return m_currentFontMetrics; }
+    FontMetrics getMetrics();
 
 private:
-    bool getMetrics(FontID _id, FontContext::FontMetrics& _metrics);
 
     static void renderUpdate(void* _userPtr, int* _rect, const unsigned char* _data);
     static int renderCreate(void* _userPtr, int _width, int _height);
