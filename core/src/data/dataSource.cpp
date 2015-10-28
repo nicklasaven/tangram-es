@@ -114,6 +114,7 @@ void DataSource::constructURL(const TileID& _tileCoord, std::string& _url) const
         ypos == std::string::npos ||
         zpos == std::string::npos) {
         LOGE("Bad URL template!");
+        return;
     }
     _url.replace(xpos, 3, std::to_string(_tileCoord.x));
     _url.replace(ypos, 3, std::to_string(_tileCoord.y));
