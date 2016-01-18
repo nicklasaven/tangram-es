@@ -4,6 +4,7 @@
 #include "sceneLoader.h"
 #include "lights.h"
 #include "data/clientGeoJsonSource.h"
+#include "data/twkbSource.h"
 #include "data/geoJsonSource.h"
 #include "data/mvtSource.h"
 #include "gl/shaderProgram.h"
@@ -824,6 +825,8 @@ void SceneLoader::loadSource(const std::pair<Node, Node>& src, Scene& _scene) {
         LOGW("TopoJSON data sources not yet implemented"); // TODO
     } else if (type == "MVT") {
         sourcePtr = std::shared_ptr<DataSource>(new MVTSource(name, url));
+    } else if (type == "TWKB_SqlLite") {
+        sourcePtr = std::shared_ptr<DataSource>(new TWKBSource(name, url));
     } else {
         LOGW("Unrecognized data source type '%s', skipping", type.c_str());
     }

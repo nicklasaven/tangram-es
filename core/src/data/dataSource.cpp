@@ -147,7 +147,19 @@ void DataSource::onTileLoaded(std::vector<char>&& _rawData, std::shared_ptr<Tile
 
 
 bool DataSource::loadTileData(std::shared_ptr<TileTask>&& _task, TileTaskCb _cb) {
-
+    if(DataSource::type==1)
+    {
+      TileID tileID = _task->tileId();
+      
+    std::string url("Hej");
+//      std::string sql(constructSQL(_task->tile->getID()));
+      
+ //     return startSQLquery(url, std::bind(&DataSource::onTileLoaded,
+      return startSqlRequest(tileID.x, tileID.y,tileID.z , std::bind(&DataSource::onTileLoaded, this,  std::placeholders::_1, std::move(_task), _cb));
+      return 0;
+    }
+    else
+    {
     std::string url(constructURL(_task->tileId()));
 
     // Using bind instead of lambda to be able to 'move' (until c++14)
@@ -157,9 +169,11 @@ bool DataSource::loadTileData(std::shared_ptr<TileTask>&& _task, TileTaskCb _cb)
                                           std::move(_task), _cb));
 
 }
+}
 
 void DataSource::cancelLoadingTile(const TileID& _tileID) {
-    cancelUrlRequest(constructURL(_tileID));
+  if(DataSource::type!=1)
+      cancelUrlRequest(constructURL(_tileID));
 }
 
 }

@@ -60,6 +60,9 @@ using UrlCallback = std::function<void(std::vector<char>&&)>;
  */
 bool startUrlRequest(const std::string& _url, UrlCallback _callback);
 
+
+bool startSqlRequest(int x, int y, int z, UrlCallback _callback);
+
 /* Stop retrieving data from a URL that was previously requested
  */
 void cancelUrlRequest(const std::string& _url);

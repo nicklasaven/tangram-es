@@ -143,6 +143,20 @@ bool startUrlRequest(const std::string& _url, UrlCallback _callback) {
 
 }
 
+bool startSqlRequest(int x, int y, int z, UrlCallback _callback) {
+
+    //~ std::unique_ptr<UrlTask> task(new UrlTask(_url, _callback));
+    //~ for(auto& worker : s_Workers) {
+        //~ if(worker.isAvailable()) {
+            //~ worker.perform(std::move(task));
+            //~ return true;
+        //~ }
+    //~ }
+    //~ s_urlTaskQueue.push_back(std::move(task));
+    return true;
+
+}
+
 void cancelUrlRequest(const std::string& _url) {
 
     // Only clear this request if a worker has not started operating on it!!

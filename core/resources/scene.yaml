@@ -64,6 +64,9 @@ sources:
     osm:
         type: MVT
         url:  https://vector.mapzen.com/osm/all/{z}/{x}/{y}.mvt
+    test:
+        type: TWKB_SqlLite
+        url:  SELECT * from test;
 
 layers:
     touch:
