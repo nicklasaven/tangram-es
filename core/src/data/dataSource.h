@@ -20,9 +20,16 @@ class DataSource : public std::enable_shared_from_this<DataSource> {
 
 public:
 
-    /* Tile data sources must have a name and a URL template that defines where to find
-     * a tile based on its coordinates. A URL template includes exactly one occurrance
-     * each of '{x}', '{y}', and '{z}' which will be replaced by the x index, y index,
+    /*Tell if type is:
+     * 1	sqlite, with need of building sqlite
+     * 0	something else*/
+    
+    int type=0;
+    
+    /* Tile data sources must have a name and a URL template that defines where to find 
+     * a tile based on its coordinates. A URL template includes exactly one occurrance 
+     * each of '{x}', '{y}', and '{z}' which will be replaced by the x index, y index, 
+
      * and zoom level of tiles to produce their URL.
      */
     DataSource(const std::string& _name, const std::string& _urlTemplate, int32_t _maxZoom = 18);

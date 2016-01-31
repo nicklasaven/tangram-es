@@ -4,6 +4,7 @@
 #include "sceneLoader.h"
 #include "lights.h"
 #include "data/clientGeoJsonSource.h"
+#include "data/twkbSource.h"
 #include "data/geoJsonSource.h"
 #include "data/mvtSource.h"
 #include "data/topoJsonSource.h"
@@ -839,6 +840,9 @@ void SceneLoader::loadSource(const std::pair<Node, Node>& src, Scene& _scene) {
         sourcePtr = std::shared_ptr<DataSource>(new TopoJsonSource(name, url, maxZoom));
     } else if (type == "MVT") {
         sourcePtr = std::shared_ptr<DataSource>(new MVTSource(name, url, maxZoom));
+    } else if (type == "TWKB_SqlLite") {
+        sourcePtr = std::shared_ptr<DataSource>(new TWKBSource(name, url, maxZoom));
+
     } else {
         LOGW("Unrecognized data source type '%s', skipping", type.c_str());
     }

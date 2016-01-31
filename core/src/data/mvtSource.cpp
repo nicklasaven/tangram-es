@@ -9,9 +9,9 @@
 
 namespace Tangram {
 
-
 MVTSource::MVTSource(const std::string& _name, const std::string& _urlTemplate, int32_t _maxZoom) :
-    DataSource(_name, _urlTemplate, _maxZoom) {
+    DataSource(_name, _urlTemplate, _maxZoom) {	    
+      type=2;
 }
 
 std::shared_ptr<TileData> MVTSource::parse(const TileTask& _task, const MapProjection& _projection) const {
