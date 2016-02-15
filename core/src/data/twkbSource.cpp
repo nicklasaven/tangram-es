@@ -7,16 +7,14 @@
 #include "tile/tileTask.h"
 #include "platform.h"
 
-
 namespace Tangram {
-
-TWKBSource::TWKBSource(const std::string& _name, const std::string& _urlTemplate) :
+TWKBSource::TWKBSource(const std::string& _name, const std::string& _urlTemplate, int32_t _maxZoom) :
     DataSource(_name, _urlTemplate) {
       type=1;
 }
 
 
-int getTileId(int z, int tileX,int tileY)
+int TWKBSource::getTileId(int z, int tileX,int tileY) const
 {
 	int i,min=0;	
 	
@@ -30,7 +28,7 @@ int getTileId(int z, int tileX,int tileY)
 }
 
 
-int get_blob(twkb::TWKB_BUF *tb,sqlite3_stmt *res, int icol)
+int TWKBSource::get_blob(twkb::TWKB_BUF *tb,sqlite3_stmt *res, int icol) const
 {
 	/*twkb-buffer*/
 	uint8_t *buf;	
@@ -57,7 +55,9 @@ int get_blob(twkb::TWKB_BUF *tb,sqlite3_stmt *res, int icol)
       
 
 //std::shared_ptr<TileData> TWKBSource::parse(const Tangram::TileTask& _task, const Tangram::MapProjection& _projection) 	 {
- std::shared_ptr<Tangram::TileData> parse(const Tangram::TileTask& _task,const Tangram::MapProjection& _projection) {
+
+ //std::shared_ptr<Tangram::TileData>             parse(const Tangram::TileTask& _task,const Tangram::MapProjection& _projection) const override;
+ std::shared_ptr<Tangram::TileData> TWKBSource::parse(const Tangram::TileTask& _task,const Tangram::MapProjection& _projection) const {
 
 //std::shared_ptr<TileData> TWKBSource::parse(const TileTask& _task, const MapProjection& _projection)  {
 
@@ -96,8 +96,9 @@ int get_blob(twkb::TWKB_BUF *tb,sqlite3_stmt *res, int icol)
     tileId_min = getTileId(z, tileX,tileY);
 
     tileId_max = tileId_min +  (1<<(2*z))-1;
-
-    char *sqltxt = "SELECT twkb,id FROM veger where tileid>=?1 and tileid <= ?2";
+    std::string str = "SELECT twkb,id FROM veger where tileid>=?1 and tileid <= ?2";;
+const char * sqltxt = str.c_str();
+  //  char *sqltxt = "SELECT twkb,id FROM veger where tileid>=?1 and tileid <= ?2";
     rc = sqlite3_prepare_v2(db, sqltxt, -1, &res, 0);
 
 

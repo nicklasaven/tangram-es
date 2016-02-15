@@ -155,7 +155,10 @@ bool DataSource::loadTileData(std::shared_ptr<TileTask>&& _task, TileTaskCb _cb)
 //      std::string sql(constructSQL(_task->tile->getID()));
       
  //     return startSQLquery(url, std::bind(&DataSource::onTileLoaded,
-      return startSqlRequest(tileID.x, tileID.y,tileID.z , std::bind(&DataSource::onTileLoaded, this,  std::placeholders::_1, std::move(_task), _cb));
+      return startSqlRequest(tileID.x, tileID.y,tileID.z ,url, std::bind(&DataSource::onTileLoaded, this,
+									 std::placeholders::_1,
+									 std::move(_task),
+									 _cb));
       return 0;
     }
     else

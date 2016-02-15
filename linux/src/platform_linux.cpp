@@ -6,6 +6,7 @@
 #include <list>
 
 #include "urlWorker.h"
+#include "sqlWorker.h"
 #include "platform_linux.h"
 
 #include <libgen.h>
@@ -23,7 +24,9 @@ static bool s_isContinuousRendering = false;
 static std::string s_resourceRoot;
 
 static UrlWorker s_Workers[NUM_WORKERS];
+static SqlWorker sq_Workers[NUM_WORKERS];
 static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
+static std::list<std::unique_ptr<SqlTask>> s_sqlTaskQueue;
 
 void logMsg(const char* fmt, ...) {
     va_list args;
@@ -143,16 +146,16 @@ bool startUrlRequest(const std::string& _url, UrlCallback _callback) {
 
 }
 
-bool startSqlRequest(int x, int y, int z, UrlCallback _callback) {
+bool startSqlRequest(int x, int y, int z,const std::string& _url, UrlCallback _callback) {
 
-    //~ std::unique_ptr<UrlTask> task(new UrlTask(_url, _callback));
-    //~ for(auto& worker : s_Workers) {
-        //~ if(worker.isAvailable()) {
-            //~ worker.perform(std::move(task));
-            //~ return true;
-        //~ }
-    //~ }
-    //~ s_urlTaskQueue.push_back(std::move(task));
+     std::unique_ptr<SqlTask> task(new SqlTask(_url, _callback));
+     for(auto& worker : sq_Workers) {
+         if(worker.isAvailable()) {
+             worker.perform(std::move(task));
+             return true;
+         }
+     }
+     s_sqlTaskQueue.push_back(std::move(task));
     return true;
 
 }
@@ -173,6 +176,11 @@ void cancelUrlRequest(const std::string& _url) {
 
 void finishUrlRequests() {
     for(auto& worker : s_Workers) {
+        worker.join();
+    }
+}
+void finishSQlRequests() {
+    for(auto& worker : sq_Workers) {
         worker.join();
     }
 }

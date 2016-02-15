@@ -5,6 +5,7 @@
 
 project(core)
 
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # using regular Clang or AppleClang
     list(APPEND CORE_CXX_FLAGS -Wno-gnu-anonymous-struct)
