@@ -13,13 +13,14 @@
 #include "gl/shaderProgram.h"
 #include "gl/renderState.h"
 #include "gl/primitives.h"
+#include "gl/hardware.h"
 #include "util/inputHandler.h"
 #include "tile/tileCache.h"
 #include "view/view.h"
 #include "data/clientGeoJsonSource.h"
 #include "text/fontContext.h"
 #include "gl.h"
-#include "gl/extension.h"
+#include "gl/hardware.h"
 #include "util/ease.h"
 #include "debug/textDisplay.h"
 #include <memory>
@@ -201,7 +202,7 @@ void update(float _dt) {
 }
 
 void render() {
-    clock_t start, end;
+    clock_t start{0};
 
     if (Tangram::getDebugFlag(Tangram::DebugFlags::tangram_infos)) {
         start = clock();
@@ -240,8 +241,7 @@ void render() {
         // Force opengl to finish commands (for accurate frame time)
         glFinish();
 
-        end = clock();
-
+        clock_t end = clock();
         static int cpt = 0;
         static float totaltime = 0;
         static float time = 0.f;
@@ -560,10 +560,11 @@ void setupGL() {
     // Set default primitive render color
     Primitives::setColor(0xffffff);
 
-    // Load GL extensions
-    GLExtensions::load();
+    // Load GL extensions and capabilities
+    Hardware::loadExtensions();
+    Hardware::loadCapabilities();
 
-    GLExtensions::printAvailableExtensions();
+    Hardware::printAvailableExtensions();
 
     while (Error::hadGlError("Tangram::setupGL()")) {}
 }

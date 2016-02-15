@@ -1,7 +1,7 @@
 #include "vboMesh.h"
 #include "shaderProgram.h"
 #include "renderState.h"
-#include "extension.h"
+#include "hardware.h"
 #include "platform.h"
 
 namespace Tangram {
@@ -96,7 +96,7 @@ void VboMesh::subDataUpload() {
 
     long vertexBytes = m_nVertices * m_vertexLayout->getStride();
 
-    if (GLExtensions::supportsMapBuffer) {
+    if (Hardware::supportsMapBuffer) {
         // invalidate/orphane the data store on the driver
         glBufferData(GL_ARRAY_BUFFER, vertexBytes, NULL, m_hint);
         GLvoid* dataStore = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -184,7 +184,7 @@ void VboMesh::draw(ShaderProgram& _shader) {
         subDataUpload();
     }
 
-    if (GLExtensions::supportsVAOs) {
+    if (Hardware::supportsVAOs) {
         if (!m_vaos) {
             m_vaos = std::make_unique<Vao>();
 
@@ -208,7 +208,7 @@ void VboMesh::draw(ShaderProgram& _shader) {
         uint32_t nIndices = o.first;
         uint32_t nVertices = o.second;
 
-        if (!GLExtensions::supportsVAOs) {
+        if (!Hardware::supportsVAOs) {
             // Enable vertex attribs via vertex layout object
             size_t byteOffset = vertexOffset * m_vertexLayout->getStride();
             m_vertexLayout->enable(_shader, byteOffset);
@@ -228,7 +228,7 @@ void VboMesh::draw(ShaderProgram& _shader) {
         indiceOffset += nIndices;
     }
 
-    if (GLExtensions::supportsVAOs) {
+    if (Hardware::supportsVAOs) {
         m_vaos->unbind();
     }
 }
@@ -252,6 +252,40 @@ size_t VboMesh::bufferSize() {
     return m_nVertices * m_vertexLayout->getStride() + m_nIndices * sizeof(GLushort);
 }
 
+// Add indices by collecting them into batches to draw as much as
+// possible in one draw call.  The indices must be shifted by the
+// number of vertices that are present in the current batch.
+// Note: m_glIndexdata must already be allocted to the right size!
+size_t VboMesh::compileIndices(const std::vector<std::pair<uint32_t, uint32_t>>& _offsets,
+                               const std::vector<uint16_t>& _indices, size_t _offset) {
+
+    m_vertexOffsets.emplace_back(0, 0);
+
+    GLushort* dst = m_glIndexData + _offset;
+    size_t curVertices = 0;
+    size_t src = 0;
+
+    for (auto& p : _offsets) {
+        size_t nIndices = p.first;
+        size_t nVertices = p.second;
+
+        if (curVertices + nVertices > MAX_INDEX_VALUE) {
+            m_vertexOffsets.emplace_back(0, 0);
+            curVertices = 0;
+        }
+        for (size_t i = 0; i < nIndices; i++, dst++) {
+            *dst = _indices[src++] + curVertices;
+        }
+
+        auto& offset = m_vertexOffsets.back();
+        offset.first += nIndices;
+        offset.second += nVertices;
+
+        curVertices += nVertices;
+    }
+
+    return _offset + src;
+}
 
 void VboMesh::invalidateAllVBOs() {
 
